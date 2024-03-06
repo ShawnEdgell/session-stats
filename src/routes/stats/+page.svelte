@@ -2,7 +2,7 @@
 </script>
 
 <div class="container">
-	<h1 class="h1">Camera Settings</h1>
+	<h1 class="h1">Gameplay Stats</h1>
 	<p>
 		Lorem ipsum dolor sit amet consectetur adipisicing elit. Eius, corrupti. Porro esse cupiditate
 		consequuntur atque laborum voluptatibus corrupti accusamus ut veniam! Nam ex provident harum
