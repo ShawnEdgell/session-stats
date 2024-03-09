@@ -1,28 +1,22 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
 	import '../app.postcss';
 	import Navigation from '$lib/components/Navigation.svelte';
-
-	// Scroll to top whenever the page changes
-	onMount(() => {
-		page.subscribe(() => {
-			window.scrollTo(0, 0);
-		});
-	});
 </script>
 
-<div class="flex flex-col h-screen justify-end sm:justify-between">
-	<!-- Conditional rendering for Navigation based on screen size -->
-	<div class="sm:block hidden">
+<!-- Container for the whole layout -->
+<div class="flex flex-col min-h-full">
+	<!-- Top Navigation - Visible on medium and larger screens -->
+	<div class="hidden sm:block sticky top-0 z-10">
 		<Navigation />
 	</div>
-	<!-- Scrollable Router Slot -->
-	<div class="flex-1 overflow-y-auto space-y-12 p-4">
+
+	<!-- Main Content Area - Allows for independent scrolling -->
+	<div class="flex flex-col justify-center flex-1 overflow-y-auto p-4">
 		<slot />
 	</div>
-	<!-- Navigation for larger screens, if needed at the top -->
-	<div class="sm:hidden">
+
+	<!-- Bottom Navigation - Visible on small screens -->
+	<div class="block sm:hidden sticky bottom-0 z-10">
 		<Navigation />
 	</div>
 </div>

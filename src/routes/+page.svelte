@@ -1,6 +1,6 @@
 <script lang="ts"></script>
 
-<div class="flex flex-col space-y-5 h-full text-center justify-center">
+<div class="text-center space-y-5">
 	<h1 class="h1">Session Stats Hub</h1>
 	<p>Discover, share, and rate the best stats and settings for Session: Skate Sim.</p>
 	<div>
