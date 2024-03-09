@@ -12,7 +12,7 @@
 
 	<!-- Main Content Area - Allows for independent scrolling -->
 
-	<div class="flex-1 max-w-4xl w-full p-4">
+	<div class="flex-1 flex justify-center max-w-4xl w-full p-4">
 		<slot />
 	</div>
 
