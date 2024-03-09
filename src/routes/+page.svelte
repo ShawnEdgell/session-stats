@@ -2,7 +2,7 @@
 	import { LightSwitch } from '@skeletonlabs/skeleton';
 </script>
 
-<div class="h-[85vh] flex flex-col justify-center items-center text-center space-y-5">
+<div class="h-full flex flex-col justify-center items-center text-center space-y-5">
 	<div class="sm:hidden">
 		<LightSwitch />
 	</div>

@@ -4,7 +4,7 @@
 </script>
 
 <!-- Container for the whole layout -->
-<div class="flex flex-col min-h-full">
+<div class="h-full flex flex-col">
 	<!-- Top Navigation - Visible on medium and larger screens -->
 	<div class="hidden sm:block sticky top-0 z-10">
 		<Navigation />
