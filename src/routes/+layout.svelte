@@ -11,7 +11,7 @@
 	</div>
 
 	<!-- Main Content Area - Allows for independent scrolling -->
-	<div class="flex flex-col justify-center flex-1 overflow-y-auto p-4">
+	<div class="space-y-8 flex-1 overflow-y-auto p-4">
 		<slot />
 	</div>
 

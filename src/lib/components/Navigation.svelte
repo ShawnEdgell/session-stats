@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AppBar, TabGroup, Tab, LightSwitch, TabAnchor } from '@skeletonlabs/skeleton';
+	import { AppBar, TabGroup, TabAnchor, LightSwitch } from '@skeletonlabs/skeleton';
 	import { page } from '$app/stores';
 </script>
 
@@ -43,7 +43,7 @@
 				</div>
 			</svelte:fragment>
 			<div class="min-w-16">
-				<span>Home</span>
+				<span class="text-sm">Home</span>
 			</div>
 		</TabAnchor>
 
@@ -119,7 +119,7 @@
 				</div>
 			</svelte:fragment>
 			<div class="min-w-16">
-				<span>Camera</span>
+				<span class="text-sm">Camera</span>
 			</div>
 		</TabAnchor>
 
