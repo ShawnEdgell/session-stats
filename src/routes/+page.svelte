@@ -6,7 +6,7 @@
 	<div class="sm:hidden">
 		<LightSwitch />
 	</div>
-	<h1 class="h1">Session Stats Hub</h1>
+	<h1 class="h1 text-4xl sm:text-5xl">Session Stats Hub</h1>
 	<p>Discover, share, and rate the best stats and settings for Session: Skate Sim.</p>
 	<div>
 		<a href="/stats" class="btn mr-2 variant-filled-primary">Gameplay Stats</a>
