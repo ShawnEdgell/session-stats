@@ -60,7 +60,7 @@
 	onMount(fetchCameraSettings);
 </script>
 
-<div class="container mx-auto max-w-4xl p-5">
+<div class="container">
 	<form on:submit|preventDefault={handleSubmit} class="space-y-4">
 		<input
 			type="text"
