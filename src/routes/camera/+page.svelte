@@ -1,14 +1,9 @@
 <script lang="ts">
-	import { supabase } from '$lib/supabaseClient';
+	import type { CameraSetting } from '$lib/cameraService';
 	import { onMount } from 'svelte';
 	import { Paginator } from '@skeletonlabs/skeleton';
-
-	interface CameraSetting {
-		id: number;
-		title: string;
-		description: string;
-		created_at?: Date;
-	}
+	import Form from '$lib/components/Form.svelte';
+	import { fetchCameraSettings, submitCameraSetting } from '$lib/cameraService';
 
 	let title = '';
 	let description = '';
@@ -26,25 +21,16 @@
 		if (!title.trim() || !description.trim())
 			return console.error('Title and description cannot be empty.');
 
-		const { data, error } = await supabase.from('camera_settings').insert([{ title, description }]);
-		if (error) return console.error('Error submitting data:', error.message);
-
-		console.log('Submitted:', data);
+		await submitCameraSetting(title, description);
+		fetchCameraSettings();
 		title = '';
 		description = '';
-		fetchCameraSettings();
 		formSubmitted = true;
 	}
 
-	async function fetchCameraSettings() {
-		const { data, error } = await supabase
-			.from('camera_settings')
-			.select('*')
-			.order('created_at', { ascending: false });
-		if (error) return console.error('Error fetching camera settings:', error.message);
-
-		cameraSettings = data;
-		paginationSettings.size = data.length;
+	async function loadData() {
+		cameraSettings = await fetchCameraSettings();
+		paginationSettings.size = cameraSettings.length;
 	}
 
 	function onPageChange(e: CustomEvent) {
@@ -57,26 +43,11 @@
 		(paginationSettings.page + 1) * paginationSettings.limit
 	);
 
-	onMount(fetchCameraSettings);
+	onMount(loadData);
 </script>
 
 <div class="container">
-	<form on:submit|preventDefault={handleSubmit} class="space-y-4">
-		<input
-			type="text"
-			bind:value={title}
-			placeholder="Title"
-			class="w-full text-black p-2 border rounded-md"
-		/>
-		<textarea
-			bind:value={description}
-			placeholder="Description"
-			class="w-full text-black p-2 border rounded-md h-40"
-		></textarea>
-		<button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-			>Submit</button
-		>
-	</form>
+	<Form onSubmit={handleSubmit} />
 
 	<Paginator
 		bind:settings={paginationSettings}
