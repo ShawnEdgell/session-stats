@@ -5,15 +5,12 @@
 	import { writable } from 'svelte/store';
 	import type { User } from '@supabase/supabase-js';
 
-	// Reactive variable to track authentication status
 	const isAuthenticated = writable(false);
-	let currentUser: User | null | undefined = null; // Store current user information
-
-	// Check authentication status on component mount
+	let currentUser: User | null | undefined = null;
 	onMount(() => {
 		supabase.auth.onAuthStateChange((_, session) => {
-			isAuthenticated.set(!!session); // Update isAuthenticated based on session
-			currentUser = session?.user; // Store current user information
+			isAuthenticated.set(!!session);
+			currentUser = session?.user;
 		});
 	});
 
@@ -22,8 +19,8 @@
 		title: string;
 		description: string;
 		created_at?: Date;
-		discord_id?: string; // Add discord_id to Stat interface
-		editable?: boolean; // Add editable flag to track edit mode
+		discord_id?: string;
+		editable?: boolean;
 	}
 
 	let title = '';
@@ -53,7 +50,7 @@
 			console.log('Submission successful');
 			title = '';
 			description = '';
-			fetchStats(); // Refresh camera settings after successful submission
+			fetchStats();
 		}
 	}
 
@@ -65,7 +62,7 @@
 				console.error(`Error deleting post: ${error.message}`);
 			} else {
 				console.log('Post deleted successfully');
-				fetchStats(); // Refresh camera settings after successful deletion
+				fetchStats();
 			}
 		} catch (error: any) {
 			console.error(`Error deleting post: ${error.message}`);
@@ -83,8 +80,8 @@
 				console.error(`Error updating post: ${error.message}`);
 			} else {
 				console.log('Post updated successfully');
-				setting.editable = false; // Disable edit mode after successful update
-				fetchStats(); // Refresh camera settings after successful update
+				setting.editable = false;
+				fetchStats();
 			}
 		} catch (error: any) {
 			console.error(`Error updating post: ${error.message}`);
@@ -117,7 +114,6 @@
 		fetchStats();
 	}
 
-	// Fetch camera settings when component mounts
 	onMount(fetchStats);
 </script>
 
@@ -153,7 +149,6 @@
 			{#each Stats as setting}
 				<div class="card mb-4 p-4">
 					{#if setting.editable}
-						<!-- Editable mode -->
 						<form on:submit|preventDefault={() => updatePost(setting)} class="space-y-4">
 							<label class="block">
 								<input class="input" type="text" bind:value={setting.title} placeholder="Title" />
@@ -170,7 +165,6 @@
 								<button type="submit" class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
 									>Update</button
 								>
-								<!-- Delete button added -->
 								<button
 									class="btn btn-delete variant-filled-primary"
 									on:click={() => deletePost(setting.id)}>Delete</button
@@ -178,7 +172,6 @@
 							</div>
 						</form>
 					{:else}
-						<!-- View mode -->
 						<div class="space-y-3">
 							<h2 class="text-xl font-semibold">{setting.title}</h2>
 							<p>{setting.description}</p>
@@ -191,8 +184,10 @@
 										})
 									: 'Unknown date'}
 							</p>
+							<p class="text-sm text-gray-500">
+								Uploaded by: {currentUser ? currentUser.user_metadata.full_name : 'Unknown user'}
+							</p>
 							{#if currentUser && setting.discord_id === currentUser.id}
-								<!-- Edit button -->
 								<button
 									class="btn btn-edit variant-filled-warning"
 									on:click={() => (setting.editable = !setting.editable)}>Edit</button
