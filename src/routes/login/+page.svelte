@@ -16,7 +16,7 @@
 <div class="h-full flex flex-col justify-center items-center text-center space-y-5">
 	<h2 class="h2">LightSwitch</h2>
 	<LightSwitch />
-	<h2 class="h2">Discord Login</h2>
+	<h2 class="h2">Discord</h2>
 	{#if $isAuthenticated}
 		<button type="button" class="btn variant-filled-secondary" on:click={signOut}>Logout</button>
 	{:else}
