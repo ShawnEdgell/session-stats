@@ -1,21 +1,25 @@
 <script lang="ts">
 	import '../app.postcss';
 	import Navigation from '$lib/components/Navigation.svelte';
+	import { AppShell } from '@skeletonlabs/skeleton';
 </script>
 
-<div class="h-full flex flex-col items-center">
-	<!-- Top Navigation - Visible on medium and larger screens -->
-	<div class="hidden sm:block sticky top-0 w-screen z-10">
-		<Navigation />
-	</div>
+<AppShell>
+	<svelte:fragment slot="header">
+		<div class="hidden sm:block">
+			<Navigation />
+		</div>
+	</svelte:fragment>
 
-	<!-- Main Content Area - Allows for independent scrolling -->
-	<div class="flex-1 flex justify-center max-w-4xl w-full p-4">
+	<!-- Router Slot -->
+	<div class="h-full mx-auto max-w-4xl p-4">
 		<slot />
 	</div>
+	<!-- ---- / ---- -->
 
-	<!-- Bottom Navigation - Visible on small screens -->
-	<div class="block sm:hidden sticky bottom-0 z-10">
-		<Navigation />
-	</div>
-</div>
+	<svelte:fragment slot="footer">
+		<div class="block sm:hidden">
+			<Navigation />
+		</div></svelte:fragment
+	>
+</AppShell>
