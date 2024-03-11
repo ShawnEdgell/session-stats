@@ -21,6 +21,7 @@
 		created_at?: Date;
 		discord_id?: string;
 		editable?: boolean;
+		file_url?: string; // Add file_url property
 	}
 
 	let title = '';
@@ -28,6 +29,7 @@
 	let cameraSettings: CameraSetting[] = [];
 	let paginationSettings = { page: 0, limit: 10, size: 0, amounts: [1, 2, 5, 10] };
 	let isFetching = false;
+	let files: FileList | null = null; // Declare files variable
 
 	async function handleSubmit() {
 		if (!currentUser) {
@@ -35,26 +37,45 @@
 			return;
 		}
 
-		if (title.trim() === '' || description.trim() === '') {
-			console.error('Title and description cannot be empty.');
+		if (title.trim() === '' || description.trim() === '' || !files) {
+			console.error('Title, description, and file cannot be empty.');
 			return;
 		}
 
-		const { error } = await supabase
-			.from('camera_settings')
-			.insert([{ title, description, discord_id: currentUser.id }]);
+		const file = files[0];
+		const uniqueFileName = `${Date.now()}-${file.name}`; // Create a unique filename
+		const { data, error } = await supabase.storage
+			.from('session-public-camera-settings')
+			.upload(uniqueFileName, file, { cacheControl: '3600' });
 
 		if (error) {
-			console.error(`Error submitting data: ${error.message}`);
+			console.error(`Error uploading file: ${error.message}`);
+			return;
+		}
+
+		const fileUrl = data?.path;
+
+		if (!fileUrl) {
+			console.error('File URL not found');
+			return;
+		}
+
+		const { error: insertError } = await supabase
+			.from('camera_settings')
+			.insert([{ title, description, file_url: fileUrl, discord_id: currentUser.id }]);
+
+		if (insertError) {
+			console.error(`Error submitting data: ${insertError.message}`);
 		} else {
 			console.log('Submission successful');
 			title = '';
 			description = '';
+			files = null;
 			fetchCameraSettings();
 		}
 	}
 
-	async function deletePost(id: number) {
+	async function deletePost(id: number, fileUrl: string | undefined) {
 		try {
 			const { error } = await supabase.from('camera_settings').delete().eq('id', id).single();
 
@@ -62,6 +83,13 @@
 				console.error(`Error deleting post: ${error.message}`);
 			} else {
 				console.log('Post deleted successfully');
+
+				// Delete associated image from storage
+				if (fileUrl) {
+					const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+					await supabase.storage.from('session-public-camera-settings').remove([fileName]);
+				}
+
 				fetchCameraSettings();
 			}
 		} catch (error: any) {
@@ -71,9 +99,39 @@
 
 	async function updatePost(setting: CameraSetting) {
 		try {
+			let updateData: any = { title: setting.title, description: setting.description };
+			if (files) {
+				const file = files[0];
+				const uniqueFileName = `${Date.now()}-${file.name}`; // Create a unique filename
+				const { data, error } = await supabase.storage
+					.from('session-public-camera-settings')
+					.upload(uniqueFileName, file, { cacheControl: '3600' });
+
+				if (error) {
+					console.error(`Error uploading file: ${error.message}`);
+					return;
+				}
+
+				const fileUrl = data?.path;
+
+				if (!fileUrl) {
+					console.error('File URL not found');
+					return;
+				}
+
+				// Delete previous image
+				const previousFileUrl = setting.file_url;
+				if (previousFileUrl) {
+					const fileName = previousFileUrl.substring(previousFileUrl.lastIndexOf('/') + 1);
+					await supabase.storage.from('session-public-camera-settings').remove([fileName]);
+				}
+
+				updateData = { ...updateData, file_url: fileUrl };
+			}
+
 			const { error } = await supabase
 				.from('camera_settings')
-				.update({ title: setting.title, description: setting.description })
+				.update(updateData)
 				.eq('id', setting.id);
 
 			if (error) {
@@ -118,7 +176,8 @@
 </script>
 
 <div class="container">
-	<form on:submit|preventDefault={handleSubmit} class="space-y-4">
+	<form on:submit|preventDefault={handleSubmit} class="card p-4 space-y-4">
+		<h1>Upload Camera Settings</h1>
 		<label class="block">
 			<input class="input" type="text" bind:value={title} placeholder="Title" />
 		</label>
@@ -126,11 +185,22 @@
 			<textarea class="textarea" rows="4" bind:value={description} placeholder="Description"
 			></textarea>
 		</label>
-		<button
-			type="submit"
-			disabled={!title.trim() || !description.trim() || !$isAuthenticated}
-			class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">Submit</button
-		>
+		<div>
+			<!-- New div for the file upload input and the message -->
+			<input class="input" type="file" bind:files />
+			<small class="text-gray-500">Max file size: 2MB</small>
+			<!-- Message below the file input -->
+		</div>
+		<div class="flex justify-end">
+			<!-- Use flexbox to align items -->
+			<button
+				type="submit"
+				disabled={!title.trim() || !description.trim() || !files || !$isAuthenticated}
+				class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
+			>
+				Submit
+			</button>
+		</div>
 	</form>
 
 	<Paginator
@@ -148,55 +218,107 @@
 		<div class="mt-8">
 			{#each cameraSettings as setting}
 				<div class="card mb-4 p-4">
-					{#if setting.editable}
-						<form on:submit|preventDefault={() => updatePost(setting)} class="space-y-4">
-							<label class="block">
-								<input class="input" type="text" bind:value={setting.title} placeholder="Title" />
-							</label>
-							<label class="block">
-								<textarea
-									class="textarea"
-									rows="4"
-									bind:value={setting.description}
-									placeholder="Description"
-								></textarea>
-							</label>
-							<div class="flex justify-between items-center">
-								<button type="submit" class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
-									>Update</button
-								>
-								<button
-									class="btn btn-delete variant-filled-primary"
-									on:click={() => deletePost(setting.id)}>Delete</button
-								>
-							</div>
-						</form>
-					{:else}
-						<div class="space-y-3">
-							<h2 class="text-xl font-semibold">{setting.title}</h2>
-							<p>{setting.description}</p>
-							<p class="text-sm text-gray-500">
-								Submitted on: {setting.created_at
-									? new Date(setting.created_at).toLocaleDateString('en-US', {
-											year: 'numeric',
-											month: 'long',
-											day: 'numeric'
-										})
-									: 'Unknown date'}
-							</p>
-							<p class="text-sm text-gray-500">
-								Uploaded by: {currentUser ? currentUser.user_metadata.full_name : 'Unknown user'}
-							</p>
-							{#if currentUser && setting.discord_id === currentUser.id}
-								<button
-									class="btn btn-edit variant-filled-warning"
-									on:click={() => (setting.editable = !setting.editable)}>Edit</button
-								>
+					<div class="flex flex-col md:flex-row">
+						<!-- Display other data -->
+						<div class="md:w-2/3">
+							{#if setting.editable}
+								<form on:submit|preventDefault={() => updatePost(setting)} class="space-y-4">
+									<label class="block">
+										<input
+											class="input"
+											type="text"
+											bind:value={setting.title}
+											placeholder="Title"
+										/>
+									</label>
+									<label class="block">
+										<textarea
+											class="textarea"
+											rows="4"
+											bind:value={setting.description}
+											placeholder="Description"
+										></textarea>
+									</label>
+									<input class="input" type="file" bind:files />
+									<div class="flex justify-between items-center">
+										<button
+											type="submit"
+											class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
+										>
+											Update
+										</button>
+										<button
+											class="btn btn-delete variant-filled-primary"
+											on:click={() => deletePost(setting.id, setting.file_url)}>Delete</button
+										>
+									</div>
+								</form>
+							{:else}
+								<div class="space-y-3">
+									<h2 class="text-xl font-semibold">{setting.title}</h2>
+									<div>
+										<p class="text-sm text-gray-500">
+											Submitted on: {setting.created_at
+												? new Date(setting.created_at).toLocaleDateString('en-US', {
+														year: 'numeric',
+														month: 'long',
+														day: 'numeric'
+													})
+												: 'Unknown date'}
+										</p>
+										<p class="text-sm text-gray-500">
+											Uploaded by: {currentUser
+												? currentUser.user_metadata.full_name
+												: 'Unknown user'}
+										</p>
+									</div>
+									<p>{setting.description}</p>
+
+									{#if currentUser && setting.discord_id === currentUser.id}
+										<button
+											class="btn btn-edit variant-filled-warning"
+											on:click={() => (setting.editable = !setting.editable)}
+										>
+											Edit
+										</button>
+									{/if}
+								</div>
 							{/if}
 						</div>
-					{/if}
+
+						<!-- Display image -->
+						{#if setting.file_url}
+							<div class="md:w-1/3 md:ml-4">
+								<div class="image-wrapper mt-4 md:mt-0 h-full">
+									<img
+										src={`https://merqjhmxmsxsdvosoguv.supabase.co/storage/v1/object/public/session-public-camera-settings/${setting.file_url}`}
+										alt={setting.title || setting.description || 'Image'}
+										class="h-full w-full object-cover"
+									/>
+								</div>
+							</div>
+						{/if}
+					</div>
 				</div>
 			{/each}
 		</div>
 	{/if}
 </div>
+
+<style>
+	.image-wrapper {
+		position: relative;
+		width: 100%;
+		padding-top: 56.25%; /* 16:9 aspect ratio */
+		overflow: hidden;
+	}
+
+	.image-wrapper img {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover; /* Ensure the image covers the entire container */
+	}
+</style>
