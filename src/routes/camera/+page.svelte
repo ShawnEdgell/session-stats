@@ -4,6 +4,7 @@
 	import { Paginator } from '@skeletonlabs/skeleton';
 	import { writable } from 'svelte/store';
 	import type { User } from '@supabase/supabase-js';
+	import Modal from '$lib/components/Modal.svelte';
 
 	const isAuthenticated = writable(false);
 	let currentUser: User | null | undefined = null;
@@ -30,6 +31,17 @@
 	let paginationSettings = { page: 0, limit: 10, size: 0, amounts: [1, 2, 5, 10] };
 	let isFetching = false;
 	let files: FileList | null = null; // Declare files variable
+	// Function to open the modal with the clicked image
+	let selectedImageUrl: string | null = null;
+
+	function openImageModal(url: string) {
+		selectedImageUrl = url;
+	}
+
+	// Function to close the modal
+	function closeImageModal() {
+		selectedImageUrl = null;
+	}
 
 	async function handleSubmit() {
 		if (!currentUser) {
@@ -220,7 +232,7 @@
 				<div class="card mb-4 p-4">
 					<div class="flex flex-col md:flex-row">
 						<!-- Display other data -->
-						<div class="md:w-2/3">
+						<div class="md:w-3/5">
 							{#if setting.editable}
 								<form on:submit|preventDefault={() => updatePost(setting)} class="space-y-4">
 									<label class="block">
@@ -254,8 +266,9 @@
 									</div>
 								</form>
 							{:else}
-								<div class="space-y-3">
+								<div class="space-y-3 mb-4 md:mb-0 flex flex-col justify-between h-full">
 									<h2 class="text-xl font-semibold">{setting.title}</h2>
+									<p>{setting.description}</p>
 									<div>
 										<p class="text-sm text-gray-500">
 											Submitted on: {setting.created_at
@@ -272,29 +285,37 @@
 												: 'Unknown user'}
 										</p>
 									</div>
-									<p>{setting.description}</p>
-
 									{#if currentUser && setting.discord_id === currentUser.id}
-										<button
-											class="btn btn-edit variant-filled-warning"
-											on:click={() => (setting.editable = !setting.editable)}
-										>
-											Edit
-										</button>
+										<div>
+											<button
+												class="btn btn-edit variant-filled-warning"
+												on:click={() => (setting.editable = !setting.editable)}
+											>
+												Edit
+											</button>
+										</div>
 									{/if}
 								</div>
 							{/if}
 						</div>
 
-						<!-- Display image -->
+						<!-- Display image with modal functionality -->
 						{#if setting.file_url}
-							<div class="md:w-1/3 md:ml-4">
-								<div class="image-wrapper mt-4 md:mt-0 h-full">
-									<img
-										src={`https://merqjhmxmsxsdvosoguv.supabase.co/storage/v1/object/public/session-public-camera-settings/${setting.file_url}`}
-										alt={setting.title || setting.description || 'Image'}
-										class="h-full w-full object-cover"
-									/>
+							<div class="md:w-2/5 md:ml-4">
+								<div class="image-wrapper h-full">
+									<button
+										class="h-full w-full mt-4 md:mt-0 object-cover cursor-pointer"
+										on:click={() =>
+											openImageModal(
+												`https://merqjhmxmsxsdvosoguv.supabase.co/storage/v1/object/public/session-public-camera-settings/${setting.file_url}`
+											)}
+									>
+										<img
+											src={`https://merqjhmxmsxsdvosoguv.supabase.co/storage/v1/object/public/session-public-camera-settings/${setting.file_url}`}
+											alt={setting.title || setting.description || 'Image'}
+											class="h-full w-full object-cover"
+										/>
+									</button>
 								</div>
 							</div>
 						{/if}
@@ -302,6 +323,10 @@
 				</div>
 			{/each}
 		</div>
+		<!-- Display the modal component -->
+		{#if selectedImageUrl}
+			<Modal imageUrl={selectedImageUrl} onClose={closeImageModal} />
+		{/if}
 	{/if}
 </div>
 
