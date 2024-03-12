@@ -1,17 +1,14 @@
 <script lang="ts">
+	import { isAuthenticated } from '$lib/stores';
 	import { supabase } from '$lib/supabaseClient';
 	import { onMount } from 'svelte';
-	import { writable } from 'svelte/store';
-	import type { Writable } from 'svelte/store';
 	import { createEventDispatcher } from 'svelte';
 	import type { User } from '@supabase/supabase-js';
 
 	// Props to specify the submission target
 	export let submitTo: 'camera' | 'stats';
 
-	export const isAuthenticated: Writable<boolean> = writable(false);
 	const dispatch = createEventDispatcher();
-
 	let currentUser: User | null | undefined = null;
 	onMount(() => {
 		supabase.auth.onAuthStateChange((_, session) => {
@@ -92,47 +89,45 @@
 	}
 </script>
 
-<div>
-	{#if $isAuthenticated}
-		<form on:submit|preventDefault={handleSubmit} class="card p-4 space-y-4">
-			<!-- Input fields for title and description -->
-			<label class="block">
-				<input
-					class="input"
-					type="text"
-					bind:value={title}
-					placeholder="Title"
-					maxlength="50"
-					on:input={updateTitle}
-				/>
-				<small class="text-gray-500">Characters: {title.length}/50</small>
-			</label>
-			<label class="block">
-				<textarea
-					class="textarea"
-					rows="4"
-					bind:value={description}
-					placeholder="Description"
-					maxlength="200"
-					on:input={updateDescription}
-				></textarea>
-				<small class="text-gray-500">Characters: {description.length}/200</small>
-			</label>
-			<!-- File input -->
-			<div>
-				<input class="input" type="file" bind:files bind:this={fileInputElement} />
-				<small class="text-gray-500"> Max file size: 2MB. Supported formats: JPG, PNG. </small>
-			</div>
-			<!-- Submit button -->
-			<div class="flex justify-end">
-				<button
-					type="submit"
-					disabled={!title.trim() || !description.trim() || !files || !$isAuthenticated}
-					class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
-				>
-					Submit
-				</button>
-			</div>
-		</form>
-	{/if}
-</div>
+{#if $isAuthenticated}
+	<form on:submit|preventDefault={handleSubmit} class="card p-4 space-y-4">
+		<!-- Input fields for title and description -->
+		<label class="block">
+			<input
+				class="input"
+				type="text"
+				bind:value={title}
+				placeholder="Title"
+				maxlength="50"
+				on:input={updateTitle}
+			/>
+			<small class="text-gray-500">Characters: {title.length}/50</small>
+		</label>
+		<label class="block">
+			<textarea
+				class="textarea"
+				rows="4"
+				bind:value={description}
+				placeholder="Description"
+				maxlength="200"
+				on:input={updateDescription}
+			></textarea>
+			<small class="text-gray-500">Characters: {description.length}/200</small>
+		</label>
+		<!-- File input -->
+		<div>
+			<input class="input" type="file" bind:files bind:this={fileInputElement} />
+			<small class="text-gray-500"> Max file size: 2MB. Supported formats: JPG, PNG. </small>
+		</div>
+		<!-- Submit button -->
+		<div class="flex justify-end">
+			<button
+				type="submit"
+				disabled={!title.trim() || !description.trim() || !files || !$isAuthenticated}
+				class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
+			>
+				Submit
+			</button>
+		</div>
+	</form>
+{/if}

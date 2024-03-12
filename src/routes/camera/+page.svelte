@@ -1,22 +1,25 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabaseClient';
 	import { onMount } from 'svelte';
-	import { writable } from 'svelte/store';
-	import { createEventDispatcher } from 'svelte';
 	import type { User } from '@supabase/supabase-js';
 	import Modal from '$lib/components/Modal.svelte';
 	import Form from '$lib/components/Form.svelte';
 	import DiscordButton from '$lib/components/DiscordButton.svelte';
 	import { Paginator } from '@skeletonlabs/skeleton';
+	import { isAuthenticated } from '$lib/stores';
 
-	export const isAuthenticated = writable(false);
-	const dispatch = createEventDispatcher();
 	let currentUser: User | null | undefined = null;
+	let selectedImageUrl: string | null = null;
+
+	const baseStorageUrl =
+		'https://merqjhmxmsxsdvosoguv.supabase.co/storage/v1/object/public/session-public-camera-settings/';
+
 	onMount(() => {
 		supabase.auth.onAuthStateChange((_, session) => {
 			isAuthenticated.set(!!session);
 			currentUser = session?.user;
 		});
+		fetchCameraSettings();
 	});
 
 	interface CameraSetting {
@@ -34,7 +37,6 @@
 	let paginationSettings = { page: 0, limit: 10, size: 0, amounts: [1, 2, 5, 10] };
 	let isFetching = false;
 	let files: FileList | null = null;
-	let selectedImageUrl: string | null = null;
 
 	function openImageModal(url: string) {
 		selectedImageUrl = url;
@@ -50,18 +52,17 @@
 
 			if (error) {
 				console.error(`Error deleting post: ${error.message}`);
-			} else {
-				console.log('Post deleted successfully');
-
-				// Delete associated image from storage
-				if (fileUrl) {
-					const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-					await supabase.storage.from('session-public-camera-settings').remove([fileName]);
-				}
-
-				// Remove the deleted post from the cameraSettings array
-				cameraSettings = cameraSettings.filter((setting) => setting.id !== id);
+				return;
 			}
+
+			console.log('Post deleted successfully');
+
+			if (fileUrl) {
+				const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+				await supabase.storage.from('session-public-camera-settings').remove([fileName]);
+			}
+
+			cameraSettings = cameraSettings.filter((setting) => setting.id !== id);
 		} catch (error: any) {
 			console.error(`Error deleting post: ${error.message}`);
 		}
@@ -72,7 +73,7 @@
 			let updateData: any = { title: setting.title, description: setting.description };
 			if (files) {
 				const file = files[0];
-				const uniqueFileName = `${Date.now()}-${file.name}`; // Create a unique filename
+				const uniqueFileName = `${Date.now()}-${file.name}`;
 				const { data, error } = await supabase.storage
 					.from('session-public-camera-settings')
 					.upload(uniqueFileName, file, { cacheControl: '3600' });
@@ -89,7 +90,6 @@
 					return;
 				}
 
-				// Delete previous image
 				const previousFileUrl = setting.file_url;
 				if (previousFileUrl) {
 					const fileName = previousFileUrl.substring(previousFileUrl.lastIndexOf('/') + 1);
@@ -106,49 +106,52 @@
 
 			if (error) {
 				console.error(`Error updating post: ${error.message}`);
-			} else {
-				console.log('Post updated successfully');
-				setting.editable = false;
-				fetchCameraSettings(); // Fetch updated data after update
+				return;
 			}
+
+			console.log('Post updated successfully');
+			setting.editable = false;
+			fetchCameraSettings();
 		} catch (error: any) {
 			console.error(`Error updating post: ${error.message}`);
 		}
 	}
 
 	async function fetchCameraSettings() {
-		isFetching = true;
-		const startIndex = paginationSettings.page * paginationSettings.limit;
-		const endIndex = (paginationSettings.page + 1) * paginationSettings.limit - 1;
+		try {
+			isFetching = true;
+			const startIndex = paginationSettings.page * paginationSettings.limit;
+			const endIndex = (paginationSettings.page + 1) * paginationSettings.limit - 1;
 
-		const { data, error, count } = await supabase
-			.from('camera_settings')
-			.select('*', { count: 'exact' })
-			.order('created_at', { ascending: false })
-			.range(startIndex, endIndex);
+			const { data, error, count } = await supabase
+				.from('camera_settings')
+				.select('*', { count: 'exact' })
+				.order('created_at', { ascending: false })
+				.range(startIndex, endIndex);
 
-		if (error) {
-			console.error(`Error fetching camera settings: ${error.message}`);
-		} else {
+			if (error) {
+				console.error(`Error fetching camera settings: ${error.message}`);
+				return;
+			}
+
 			cameraSettings = data.map((setting: CameraSetting) => ({ ...setting, editable: false }));
 			paginationSettings.size = count ?? 0;
+		} catch (error: any) {
+			console.error(`Error fetching camera settings: ${error.message}`);
+		} finally {
+			isFetching = false;
 		}
-
-		isFetching = false;
 	}
 
 	function onPageChange(e: CustomEvent) {
 		paginationSettings.page = e.detail;
 		fetchCameraSettings();
 	}
-
-	onMount(fetchCameraSettings);
 </script>
 
 <div class="container">
 	<DiscordButton />
 	<Form submitTo="camera" on:formSubmitted={fetchCameraSettings} />
-
 	<Paginator
 		bind:settings={paginationSettings}
 		showFirstLastButtons={false}
@@ -165,7 +168,6 @@
 			{#each cameraSettings as setting}
 				<div class="card mb-4 p-4">
 					<div class="flex flex-col md:flex-row">
-						<!-- Display other data -->
 						<div class="md:w-3/5">
 							{#if setting.editable}
 								<form on:submit|preventDefault={() => updatePost(setting)} class="space-y-4">
@@ -189,10 +191,8 @@
 									<div class="flex justify-between items-center">
 										<button
 											type="submit"
-											class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
+											class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">Update</button
 										>
-											Update
-										</button>
 										<button
 											class="btn btn-delete variant-filled-primary"
 											on:click={() => deletePost(setting.id, setting.file_url)}>Delete</button
@@ -220,28 +220,22 @@
 									{#if currentUser && setting.discord_id === currentUser.id}
 										<button
 											class="btn btn-edit variant-filled-warning"
-											on:click={() => (setting.editable = !setting.editable)}
+											on:click={() => (setting.editable = !setting.editable)}>Edit</button
 										>
-											Edit
-										</button>
 									{/if}
 								</div>
 							{/if}
 						</div>
 
-						<!-- Display image with modal functionality -->
 						{#if setting.file_url}
 							<div class="md:w-2/5 md:ml-4">
 								<div class="image-wrapper h-full">
 									<button
 										class="h-full w-full mt-4 md:mt-0 object-cover cursor-pointer"
-										on:click={() =>
-											openImageModal(
-												`https://merqjhmxmsxsdvosoguv.supabase.co/storage/v1/object/public/session-public-camera-settings/${setting.file_url}`
-											)}
+										on:click={() => openImageModal(`${baseStorageUrl}${setting.file_url}`)}
 									>
 										<img
-											src={`https://merqjhmxmsxsdvosoguv.supabase.co/storage/v1/object/public/session-public-camera-settings/${setting.file_url}`}
+											src={`${baseStorageUrl}${setting.file_url}`}
 											alt={setting.title || setting.description || 'Image'}
 											class="h-full w-full object-cover"
 										/>
@@ -253,27 +247,9 @@
 				</div>
 			{/each}
 		</div>
-		<!-- Display the modal component -->
+
 		{#if selectedImageUrl}
 			<Modal imageUrl={selectedImageUrl} onClose={closeImageModal} />
 		{/if}
 	{/if}
 </div>
-
-<style>
-	.image-wrapper {
-		position: relative;
-		width: 100%;
-		padding-top: 56.25%; /* 16:9 aspect ratio */
-		overflow: hidden;
-	}
-
-	.image-wrapper img {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-</style>
