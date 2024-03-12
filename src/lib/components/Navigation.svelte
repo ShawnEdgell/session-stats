@@ -21,7 +21,15 @@
 		border=""
 		class="bg-surface-100-800-token w-screen"
 	>
-		<TabAnchor href="/" selected={$page.url.pathname === '/'}>
+		<TabAnchor
+			href="/"
+			selected={$page.url.pathname === '/'}
+			role="tab"
+			aria-selected={$page.url.pathname === '/'}
+			aria-controls="home-panel"
+			data-testid="tab-anchor"
+		>
+			<!-- Your content for Home tab -->
 			<svelte:fragment slot="lead">
 				<div class="flex flex-col items-center justify-center">
 					<svg
@@ -46,7 +54,14 @@
 				<span class="text-sm">Home</span>
 			</div>
 		</TabAnchor>
-		<TabAnchor href="/stats" selected={$page.url.pathname === '/stats'}>
+		<TabAnchor
+			href="/stats"
+			selected={$page.url.pathname === '/stats'}
+			role="tab"
+			aria-selected={$page.url.pathname === '/stats'}
+			aria-controls="stats-panel"
+			data-testid="tab-anchor"
+		>
 			<svelte:fragment slot="lead">
 				<div class="flex flex-col items-center justify-center">
 					<svg
@@ -81,7 +96,15 @@
 				<span class="text-sm">Stats</span>
 			</div>
 		</TabAnchor>
-		<TabAnchor href="/camera" selected={$page.url.pathname === '/camera'}>
+		<TabAnchor
+			href="/camera"
+			selected={$page.url.pathname === '/camera'}
+			role="tab"
+			aria-selected={$page.url.pathname === '/camera'}
+			aria-controls="camera-panel"
+			data-testid="tab-anchor"
+		>
+			<!-- Your content for Camera tab -->
 			<svelte:fragment slot="lead">
 				<div class="flex flex-col items-center justify-center">
 					<svg
@@ -122,7 +145,14 @@
 				<span class="text-sm">Camera</span>
 			</div>
 		</TabAnchor>
-		<TabAnchor href="/settings" selected={$page.url.pathname === '/settings'}>
+		<TabAnchor
+			href="/settings"
+			selected={$page.url.pathname === '/settings'}
+			role="tab"
+			aria-selected={$page.url.pathname === '/settings'}
+			aria-controls="settings-panel"
+			data-testid="tab-anchor"
+		>
 			<svelte:fragment slot="lead">
 				<div class="flex flex-col items-center justify-center">
 					<svg
