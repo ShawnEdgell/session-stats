@@ -90,7 +90,7 @@
 			title = '';
 			description = '';
 			files = null; // Clear the files selection
-			fetchStats();
+			fetchStats(); // Fetch new data after submission
 		}
 	}
 
@@ -109,7 +109,8 @@
 					await supabase.storage.from('session-public-gameplay-settings').remove([fileName]);
 				}
 
-				fetchStats();
+				// Remove the deleted post from the Stats array
+				Stats = Stats.filter((setting) => setting.id !== id);
 			}
 		} catch (error: any) {
 			console.error(`Error deleting post: ${error.message}`);
@@ -155,7 +156,7 @@
 			} else {
 				console.log('Post updated successfully');
 				setting.editable = false;
-				fetchStats();
+				fetchStats(); // Fetch updated data after update
 			}
 		} catch (error: any) {
 			console.error(`Error updating post: ${error.message}`);
@@ -193,7 +194,7 @@
 
 <div class="container">
 	<form on:submit|preventDefault={handleSubmit} class="card p-4 space-y-4">
-		<h1>Upload Camera Settings</h1>
+		<h1>Upload Game Settings</h1>
 		<label class="block">
 			<input class="input" type="text" bind:value={title} placeholder="Title" />
 		</label>

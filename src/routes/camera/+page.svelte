@@ -90,7 +90,7 @@
 			title = '';
 			description = '';
 			files = null; // Clear the files selection
-			fetchCameraSettings();
+			fetchCameraSettings(); // Fetch new data after submission
 		}
 	}
 
@@ -109,7 +109,8 @@
 					await supabase.storage.from('session-public-camera-settings').remove([fileName]);
 				}
 
-				fetchCameraSettings();
+				// Remove the deleted post from the cameraSettings array
+				cameraSettings = cameraSettings.filter((setting) => setting.id !== id);
 			}
 		} catch (error: any) {
 			console.error(`Error deleting post: ${error.message}`);
@@ -158,7 +159,7 @@
 			} else {
 				console.log('Post updated successfully');
 				setting.editable = false;
-				fetchCameraSettings();
+				fetchCameraSettings(); // Fetch updated data after update
 			}
 		} catch (error: any) {
 			console.error(`Error updating post: ${error.message}`);
