@@ -5,6 +5,7 @@
 	import { writable } from 'svelte/store';
 	import type { User } from '@supabase/supabase-js';
 	import Modal from '$lib/components/Modal.svelte';
+	import DiscordButton from '$lib/components/DiscordButton.svelte';
 
 	const isAuthenticated = writable(false);
 	let currentUser: User | null | undefined = null;
@@ -196,29 +197,32 @@
 </script>
 
 <div class="container">
-	<form on:submit|preventDefault={handleSubmit} class="card p-4 space-y-4">
-		<h1>Upload Camera Settings</h1>
-		<label class="block">
-			<input class="input" type="text" bind:value={title} placeholder="Title" />
-		</label>
-		<label class="block">
-			<textarea class="textarea" rows="4" bind:value={description} placeholder="Description"
-			></textarea>
-		</label>
-		<div>
-			<input class="input" type="file" bind:files />
-			<small class="text-gray-500">Max file size: 2MB</small>
-		</div>
-		<div class="flex justify-end">
-			<button
-				type="submit"
-				disabled={!title.trim() || !description.trim() || !files || !$isAuthenticated}
-				class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
-			>
-				Submit
-			</button>
-		</div>
-	</form>
+	<DiscordButton />
+	{#if $isAuthenticated}
+		<form on:submit|preventDefault={handleSubmit} class="card p-4 space-y-4">
+			<h1>Upload Camera Settings</h1>
+			<label class="block">
+				<input class="input" type="text" bind:value={title} placeholder="Title" />
+			</label>
+			<label class="block">
+				<textarea class="textarea" rows="4" bind:value={description} placeholder="Description"
+				></textarea>
+			</label>
+			<div>
+				<input class="input" type="file" bind:files />
+				<small class="text-gray-500">Max file size: 2MB</small>
+			</div>
+			<div class="flex justify-end">
+				<button
+					type="submit"
+					disabled={!title.trim() || !description.trim() || !files || !$isAuthenticated}
+					class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
+				>
+					Submit
+				</button>
+			</div>
+		</form>
+	{/if}
 
 	<Paginator
 		bind:settings={paginationSettings}
