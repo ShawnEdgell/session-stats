@@ -193,6 +193,14 @@
 		fetchCameraSettings();
 	}
 
+	function updateTitle(event: Event) {
+		title = (event.target as HTMLInputElement).value;
+	}
+
+	function updateDescription(event: Event) {
+		description = (event.target as HTMLTextAreaElement).value;
+	}
+
 	onMount(fetchCameraSettings);
 </script>
 
@@ -200,17 +208,32 @@
 	<DiscordButton />
 	{#if $isAuthenticated}
 		<form on:submit|preventDefault={handleSubmit} class="card p-4 space-y-4">
-			<h1>Upload Camera Settings</h1>
+			<h1>Upload Game Settings</h1>
 			<label class="block">
-				<input class="input" type="text" bind:value={title} placeholder="Title" />
+				<input
+					class="input"
+					type="text"
+					bind:value={title}
+					placeholder="Title"
+					maxlength="50"
+					on:input={updateTitle}
+				/>
+				<small class="text-gray-500">Characters: {title.length}/50</small>
 			</label>
 			<label class="block">
-				<textarea class="textarea" rows="4" bind:value={description} placeholder="Description"
+				<textarea
+					class="textarea"
+					rows="4"
+					bind:value={description}
+					placeholder="Description"
+					maxlength="200"
+					on:input={updateDescription}
 				></textarea>
+				<small class="text-gray-500">Characters: {description.length}/200</small>
 			</label>
 			<div>
 				<input class="input" type="file" bind:files />
-				<small class="text-gray-500">Max file size: 2MB</small>
+				<small class="text-gray-500"> Max file size: 2MB. Supported formats: JPG, PNG. </small>
 			</div>
 			<div class="flex justify-end">
 				<button
