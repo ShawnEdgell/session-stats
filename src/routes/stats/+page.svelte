@@ -22,7 +22,8 @@
 		created_at?: Date;
 		discord_id?: string;
 		editable?: boolean;
-		file_url?: string; // Add file_url property
+		file_url?: string;
+		uploader_name?: string;
 	}
 
 	let title = '';
@@ -30,15 +31,13 @@
 	let Stats: Stat[] = [];
 	let paginationSettings = { page: 0, limit: 10, size: 0, amounts: [1, 2, 5, 10] };
 	let isFetching = false;
-	let files: FileList | null = null; // Declare files variable
-	// Function to open the modal with the clicked image
+	let files: FileList | null = null;
 	let selectedImageUrl: string | null = null;
 
 	function openImageModal(url: string) {
 		selectedImageUrl = url;
 	}
 
-	// Function to close the modal
 	function closeImageModal() {
 		selectedImageUrl = null;
 	}
@@ -55,7 +54,7 @@
 		}
 
 		const file = files[0];
-		const uniqueFileName = `${Date.now()}-${file.name}`; // Create a unique filename
+		const uniqueFileName = `${Date.now()}-${file.name}`;
 		const { data, error } = await supabase.storage
 			.from('session-public-gameplay-settings')
 			.upload(uniqueFileName, file, { cacheControl: '3600' });
@@ -72,9 +71,17 @@
 			return;
 		}
 
-		const { error: insertError } = await supabase
-			.from('stats')
-			.insert([{ title, description, file_url: fileUrl, discord_id: currentUser.id }]);
+		const uploaderName = currentUser.user_metadata.full_name;
+
+		const { error: insertError } = await supabase.from('stats').insert([
+			{
+				title,
+				description,
+				file_url: fileUrl,
+				discord_id: currentUser.id,
+				uploader_name: uploaderName
+			}
+		]);
 
 		if (insertError) {
 			console.error(`Error submitting data: ${insertError.message}`);
@@ -82,7 +89,7 @@
 			console.log('Submission successful');
 			title = '';
 			description = '';
-			files = null;
+			files = null; // Clear the files selection
 			fetchStats();
 		}
 	}
@@ -195,13 +202,10 @@
 			></textarea>
 		</label>
 		<div>
-			<!-- New div for the file upload input and the message -->
 			<input class="input" type="file" bind:files />
 			<small class="text-gray-500">Max file size: 2MB</small>
-			<!-- Message below the file input -->
 		</div>
 		<div class="flex justify-end">
-			<!-- Use flexbox to align items -->
 			<button
 				type="submit"
 				disabled={!title.trim() || !description.trim() || !files || !$isAuthenticated}
@@ -263,7 +267,7 @@
 									</div>
 								</form>
 							{:else}
-								<div class="space-y-3 mb-4 md:mb-0 flex flex-col justify-between h-full">
+								<div class="space-y-3 mb-4 md:mb-0">
 									<h2 class="text-xl font-semibold">{setting.title}</h2>
 									<p>{setting.description}</p>
 									<div>
@@ -277,20 +281,16 @@
 												: 'Unknown date'}
 										</p>
 										<p class="text-sm text-gray-500">
-											Uploaded by: {currentUser
-												? currentUser.user_metadata.full_name
-												: 'Unknown user'}
+											Uploaded by: {setting.uploader_name ? setting.uploader_name : 'Unknown user'}
 										</p>
 									</div>
 									{#if currentUser && setting.discord_id === currentUser.id}
-										<div>
-											<button
-												class="btn btn-edit variant-filled-warning"
-												on:click={() => (setting.editable = !setting.editable)}
-											>
-												Edit
-											</button>
-										</div>
+										<button
+											class="btn btn-edit variant-filled-warning"
+											on:click={() => (setting.editable = !setting.editable)}
+										>
+											Edit
+										</button>
 									{/if}
 								</div>
 							{/if}
@@ -341,6 +341,6 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		object-fit: cover; /* Ensure the image covers the entire container */
+		object-fit: cover;
 	}
 </style>
