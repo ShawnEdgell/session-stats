@@ -12,7 +12,7 @@
 	</svelte:fragment>
 
 	<!-- Router Slot -->
-	<div class="h-full flex justify-center mx-auto max-w-4xl p-4">
+	<div class="h-full flex justify-center mx-auto max-w-6xl p-4">
 		<slot />
 	</div>
 	<!-- ---- / ---- -->
