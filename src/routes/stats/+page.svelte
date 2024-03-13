@@ -145,7 +145,6 @@
 											placeholder="Description"
 										></textarea>
 									</label>
-									<input class="input" type="file" bind:files />
 									<div class="flex justify-between items-center">
 										<div class="flex w-full justify-between mb-4 lg:mb-0">
 											<button
@@ -196,7 +195,6 @@
 										<img
 											src={`${baseStorageUrl}${url}`}
 											alt={setting.title || setting.description || 'Image'}
-											class="carousel-image"
 											on:click={() => openImageModal(`${baseStorageUrl}${url}`)}
 											style="aspect-ratio: 16/9; object-fit: cover;"
 										/>
