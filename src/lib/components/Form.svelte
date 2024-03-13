@@ -22,61 +22,75 @@
 	let files: FileList | null = null;
 	let fileInputElement: HTMLInputElement | null = null;
 
+	// Define storagePath based on submitTo prop
+	const storagePath =
+		submitTo === 'camera' ? 'session-public-camera-settings' : 'session-public-gameplay-settings';
+
 	async function handleSubmit() {
 		if (!currentUser) {
 			console.error('User is not authenticated.');
 			return;
 		}
 
-		if (title.trim() === '' || description.trim() === '' || !files) {
-			console.error('Title, description, and file cannot be empty.');
+		if (title.trim() === '' || description.trim() === '' || !files || files.length === 0) {
+			console.error('Title, description, and file(s) cannot be empty.');
 			return;
 		}
 
-		const file = files[0];
-		const uniqueFileName = `${Date.now()}-${file.name}`;
-		// Determine the storage path based on the submission target
-		const storagePath =
-			submitTo === 'camera' ? 'session-public-camera-settings' : 'session-public-gameplay-settings';
-		const { data, error } = await supabase.storage
-			.from(storagePath)
-			.upload(uniqueFileName, file, { cacheControl: '3600' });
+		try {
+			const uploaderName = currentUser.user_metadata.full_name;
+			const fileUrls = [];
 
-		if (error) {
-			console.error(`Error uploading file: ${error.message}`);
-			return;
-		}
+			// Upload each file and collect their URLs
+			for (let i = 0; i < files.length; i++) {
+				const file = files[i];
+				const uniqueFileName = `${Date.now()}-${file.name}`;
 
-		const fileUrl = data?.path;
-		if (!fileUrl) {
-			console.error('File URL not found');
-			return;
-		}
+				// Upload file to storage
+				const { data, error } = await supabase.storage
+					.from(storagePath)
+					.upload(uniqueFileName, file, { cacheControl: '3600' });
 
-		const uploaderName = currentUser.user_metadata.full_name;
-		// Determine the database table based on the submission target
-		const table = submitTo === 'camera' ? 'camera_settings' : 'stats';
-		const { error: insertError } = await supabase.from(table).insert([
-			{
-				title,
-				description,
-				file_url: fileUrl,
-				discord_id: currentUser.id,
-				uploader_name: uploaderName
+				if (error) {
+					console.error(`Error uploading file: ${error.message}`);
+					return;
+				}
+
+				const fileUrl = data?.path;
+				if (!fileUrl) {
+					console.error('File URL not found');
+					return;
+				}
+
+				fileUrls.push(fileUrl); // Add file URL to array
 			}
-		]);
 
-		if (insertError) {
-			console.error(`Error submitting data: ${insertError.message}`);
-		} else {
-			console.log('Submission successful');
-			title = '';
-			description = '';
-			files = null;
-			if (fileInputElement) {
-				fileInputElement.value = ''; // Clear the file input
+			// Insert the array of file URLs into the database
+			const table = submitTo === 'camera' ? 'camera_settings' : 'stats';
+			const { error: insertError } = await supabase.from(table).insert([
+				{
+					title,
+					description,
+					file_url: fileUrls,
+					discord_id: currentUser.id,
+					uploader_name: uploaderName
+				}
+			]);
+
+			if (insertError) {
+				console.error(`Error submitting data: ${insertError.message}`);
+			} else {
+				console.log('Submission successful');
+				title = '';
+				description = '';
+				files = null;
+				if (fileInputElement) {
+					fileInputElement.value = ''; // Clear the file input
+				}
+				dispatch('formSubmitted'); // Emit event indicating form submission
 			}
-			dispatch('formSubmitted'); // Emit event indicating form submission
+		} catch (error: any) {
+			console.error(`Error handling form submission: ${error.message}`);
 		}
 	}
 
@@ -114,10 +128,10 @@
 			></textarea>
 			<small class="text-gray-500">Characters: {description.length}/200</small>
 		</label>
-		<!-- File input -->
+		<!-- File input for multiple files -->
 		<div>
-			<input class="input" type="file" bind:files bind:this={fileInputElement} />
-			<small class="text-gray-500"> Max file size: 2MB. Supported formats: JPG, PNG. </small>
+			<input class="input" type="file" multiple bind:files bind:this={fileInputElement} />
+			<small class="text-gray-500"> Max file size: 2MB each. Supported formats: JPG, PNG. </small>
 		</div>
 		<!-- Submit button -->
 		<div class="flex justify-end">
