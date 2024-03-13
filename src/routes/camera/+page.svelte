@@ -126,8 +126,8 @@
 		<div class="mt-8">
 			{#each cameraSettings as setting}
 				<div class="card mb-4 p-4">
-					<div class="flex flex-col md:flex-row">
-						<div class="md:w-1/2">
+					<div class="flex flex-col lg:flex-row">
+						<div class="lg:w-1/2">
 							{#if setting.editable}
 								<form on:submit|preventDefault={() => updatePost(setting)} class="space-y-4">
 									<label class="block">
@@ -148,7 +148,7 @@
 									</label>
 									<input class="input" type="file" bind:files />
 									<div class="flex justify-between items-center">
-										<div class="flex w-full justify-between mb-4 md:mb-0">
+										<div class="flex w-full justify-between mb-4 lg:mb-0">
 											<button
 												type="submit"
 												class="btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600"
@@ -162,7 +162,7 @@
 									</div>
 								</form>
 							{:else}
-								<div class="space-y-3 mb-4 md:mb-0">
+								<div class="space-y-3 mb-4 lg:mb-0">
 									<h2 class="text-xl font-semibold">{setting.title}</h2>
 									<p>{setting.description}</p>
 									<div>
@@ -191,7 +191,7 @@
 
 						<!-- Use the Carousel component to display all images -->
 						{#if setting.file_url && setting.file_url.length > 0}
-							<div class="md:w-1/2 md:ml-4">
+							<div class="lg:w-1/2 lg:ml-4">
 								<Carousel>
 									{#each setting.file_url as url}
 										<img
